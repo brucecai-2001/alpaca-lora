@@ -17,7 +17,7 @@ from peft import (
     LoraConfig,
     get_peft_model,
     get_peft_model_state_dict,
-    prepare_model_for_int8_training,
+    prepare_model_for_kbit_training,
     set_peft_model_state_dict,
 )
 from transformers import LlamaForCausalLM, LlamaTokenizer
@@ -27,7 +27,7 @@ from utils.prompter import Prompter
 
 def train(
     # model/data params
-    base_model: str = "meta-llama/Llama-2-7b-hf",  # the only required argument, HuggingFace Path
+    base_model: str = "",  # the only required argument, HuggingFace Path
     data_path: str = "alpaca_data_gpt4.json",
     output_dir: str = "./lora-alpaca",
     # training hyperparams
@@ -171,7 +171,7 @@ def train(
             ]  # could be sped up, probably
         return tokenized_full_prompt
 
-    model = prepare_model_for_int8_training(model)
+    model = prepare_model_for_kbit_training(model)
 
     config = LoraConfig(
         r=lora_r,
