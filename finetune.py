@@ -27,13 +27,13 @@ from utils.prompter import Prompter
 
 def train(
     # model/data params
-    base_model: str = "",  # the only required argument
-    data_path: str = "yahma/alpaca-cleaned",
+    base_model: str = "meta-llama/Llama-2-7b-hf",  # the only required argument, HuggingFace Path
+    data_path: str = "alpaca_data_gpt4.json",
     output_dir: str = "./lora-alpaca",
     # training hyperparams
-    batch_size: int = 128,
-    micro_batch_size: int = 4,
-    num_epochs: int = 3,
+    batch_size: int = 256,
+    micro_batch_size: int = 16,
+    num_epochs: int = 2,
     learning_rate: float = 3e-4,
     cutoff_len: int = 256,
     val_set_size: int = 2000,
@@ -54,7 +54,7 @@ def train(
     wandb_run_name: str = "",
     wandb_watch: str = "",  # options: false | gradients | all
     wandb_log_model: str = "",  # options: false | true
-    resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
+    resume_from_checkpoint: str = False,  # either training checkpoint or final adapter
     prompt_template_name: str = "alpaca",  # The prompt template to use, will default to alpaca.
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
@@ -182,6 +182,8 @@ def train(
         task_type="CAUSAL_LM",
     )
     model = get_peft_model(model, config)
+    #NOTE: compile model
+    torch.compile(model)
 
     if data_path.endswith(".json") or data_path.endswith(".jsonl"):
         data = load_dataset("json", data_files=data_path)
@@ -228,6 +230,9 @@ def train(
         # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
         model.is_parallelizable = True
         model.model_parallel = True
+
+    # Activate TensorCore
+    torch.set_float32_matmul_precision('high')
 
     trainer = transformers.Trainer(
         model=model,
