@@ -64,7 +64,7 @@ def generate_text(instruction, input=None, **kwargs):
     inputs = tokenizer(prompt, return_tensors="pt")
     input_ids = inputs["input_ids"].to(device)
 
-    generation_config = GenerationConfig(**kwargs)
+    generation_config = GenerationConfig(max_length=50, **kwargs)
 
     with torch.no_grad():
         generation_output = model.generate(
@@ -90,10 +90,10 @@ def get_user_input_and_generate_text():
 
 
 
-load_8bit: bool = False,
-base_model: str = "linhvu/decapoda-research-llama-7b-hf",
-lora_weights: str = "/root/autodl-tmp/alpaca_lora/checkpoint-390",
-prompt_template: str = "",  # The prompt template to use, will default to alpaca.
+load_8bit: bool = False
+base_model: str = "linhvu/decapoda-research-llama-7b-hf"
+lora_weights: str = "/root/autodl-tmp/alpaca_lora/checkpoint-5"
+prompt_template: str = "alpaca"  # The prompt template to use, will default to alpaca.
 base_model = base_model or os.environ.get("BASE_MODEL", "")
 assert base_model, "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
 
