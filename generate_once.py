@@ -29,32 +29,14 @@ def load_model(base_model, lora_weights, load_8bit, device):
             torch_dtype=torch.float16,
             device_map="auto",
         )
-        model = PeftModel.from_pretrained(
-            model,
-            lora_weights,
-            torch_dtype=torch.float16,
-        )
-    elif device == "mps":
-        model = LlamaForCausalLM.from_pretrained(
-            base_model,
-            device_map={"": device},
-            torch_dtype=torch.float16,
-        )
-        model = PeftModel.from_pretrained(
-            model,
-            lora_weights,
-            device_map={"": device},
-            torch_dtype=torch.float16,
-        )
-    else:
-        model = LlamaForCausalLM.from_pretrained(
-            base_model, device_map={"": device}, low_cpu_mem_usage=True
-        )
-        model = PeftModel.from_pretrained(
-            model,
-            lora_weights,
-            device_map={"": device},
-        )
+
+        if lora_weights is not None:
+            model = PeftModel.from_pretrained(
+                model,
+                lora_weights,
+                torch_dtype=torch.float16,
+            )
+
     return model
 
 def generate_text(instruction, input=None, **kwargs):
@@ -78,41 +60,39 @@ def generate_text(instruction, input=None, **kwargs):
     return prompter.get_response(output)
 
 def get_user_input_and_generate_text():
-    print("请输入您的指令（输入'exit'退出程序）：")
-    instruction = input()
+    instruction = "you are a helpful assistant"
     while instruction.lower() != 'exit':
-        input_text = input("请输入附加的输入文本（可选，直接按回车跳过）：")
+        input_text = input("请输入prompt（可选，直接按回车跳过，exit退出）：")
         generated_text = generate_text(instruction, input_text)
         print("\n生成的文本：")
         print(generated_text)
-        print("\n请输入下一条指令（输入'exit'退出程序）：")
-        instruction = input()
 
+def main(base_model, 
+        lora_weight):
+    load_8bit: bool = False
+    base_model: str = base_model or "linhvu/decapoda-research-llama-7b-hf"
+    lora_weights: str = lora_weights or None
+    prompt_template: str = "alpaca"  # The prompt template to use, will default to alpaca.
+    base_model = base_model or os.environ.get("BASE_MODEL", "")
+    assert base_model, "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
 
+    prompter = Prompter(prompt_template)
+    tokenizer = LlamaTokenizer.from_pretrained(base_model)
+        
+    # 根据设备类型加载模型
+    model = load_model(base_model, lora_weights, load_8bit, device)
 
-load_8bit: bool = False
-base_model: str = "linhvu/decapoda-research-llama-7b-hf"
-lora_weights: str = "/root/autodl-tmp/alpaca_lora/checkpoint-5"
-prompt_template: str = "alpaca"  # The prompt template to use, will default to alpaca.
-base_model = base_model or os.environ.get("BASE_MODEL", "")
-assert base_model, "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
+    # 修复模型配置
+    model.config.pad_token_id = tokenizer.pad_token_id = 0  # unk
+    model.config.bos_token_id = 1
+    model.config.eos_token_id = 2
 
-prompter = Prompter(prompt_template)
-tokenizer = LlamaTokenizer.from_pretrained(base_model)
-    
-# 根据设备类型加载模型
-model = load_model(base_model, lora_weights, load_8bit, device)
+    if not load_8bit:
+        model.half()  # 修复某些用户的问题
 
-# 修复模型配置
-model.config.pad_token_id = tokenizer.pad_token_id = 0  # unk
-model.config.bos_token_id = 1
-model.config.eos_token_id = 2
+    model.eval()
 
-if not load_8bit:
-    model.half()  # 修复某些用户的问题
-
-model.eval()
-
+    get_user_input_and_generate_text()
 
 if __name__ == "__main__":
-    get_user_input_and_generate_text()
+    main()
