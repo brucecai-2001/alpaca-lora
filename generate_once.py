@@ -33,7 +33,7 @@ def load_model(base_model, lora_weights, load_8bit, device):
         )
         
         if lora_weights is not None:
-            print("Using lora: {lora_weights}")
+            print("Using LoRA")
             model = PeftModel.from_pretrained(
                 model,
                 lora_weights,
@@ -77,8 +77,6 @@ def main(base_model=None,
     load_8bit: bool = False
     base_model: str = base_model or "linhvu/decapoda-research-llama-7b-hf"
     lora_weights: str = lora_weight or None
-    print("Using base_mode: {base_model}")
-    print("Using LoRA: {lora_weights}")
 
     prompt_template: str = "alpaca"  # The prompt template to use, will default to alpaca.
     base_model = base_model or os.environ.get("BASE_MODEL", "")
