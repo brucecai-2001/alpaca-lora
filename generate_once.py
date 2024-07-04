@@ -49,7 +49,7 @@ def generate_text(instruction, input=None, **kwargs):
     inputs = tokenizer(prompt, return_tensors="pt")
     input_ids = inputs["input_ids"].to(device)
 
-    generation_config = GenerationConfig(max_length=50, **kwargs)
+    generation_config = GenerationConfig(max_length=100, **kwargs)
 
     with torch.no_grad():
         generation_output = model.generate(
