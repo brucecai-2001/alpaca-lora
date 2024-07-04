@@ -72,10 +72,13 @@ def get_user_input_and_generate_text():
 def main(base_model=None, 
         lora_weight=None):
     global model, tokenizer, prompter
-    
+
     load_8bit: bool = False
     base_model: str = base_model or "linhvu/decapoda-research-llama-7b-hf"
     lora_weights: str = lora_weight or None
+    print("Using base_mode: {base_model}")
+    print("Using LoRA: {lora_weights}")
+    
     prompt_template: str = "alpaca"  # The prompt template to use, will default to alpaca.
     base_model = base_model or os.environ.get("BASE_MODEL", "")
     assert base_model, "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
