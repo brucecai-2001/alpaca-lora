@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 
 import torch
 import transformers
@@ -78,7 +79,7 @@ def main(base_model=None,
     lora_weights: str = lora_weight or None
     print("Using base_mode: {base_model}")
     print("Using LoRA: {lora_weights}")
-    
+
     prompt_template: str = "alpaca"  # The prompt template to use, will default to alpaca.
     base_model = base_model or os.environ.get("BASE_MODEL", "")
     assert base_model, "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
@@ -102,4 +103,9 @@ def main(base_model=None,
     get_user_input_and_generate_text()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Text generation script.")
+    parser.add_argument('--base_model', type=str, help='The base model to use.')
+    parser.add_argument('--lora_weight', type=str, help='The LoRA weights to use.')
+    args = parser.parse_args()
+    main(base_model=args.base_model, lora_weight=args.lora_weight)
     main()
