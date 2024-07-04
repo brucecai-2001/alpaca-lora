@@ -22,6 +22,7 @@ except:  # noqa: E722
     pass
 
 def load_model(base_model, lora_weights, load_8bit, device):
+    global model
     if device == "cuda":
         model = LlamaForCausalLM.from_pretrained(
             base_model,
@@ -70,6 +71,8 @@ def get_user_input_and_generate_text():
 
 def main(base_model=None, 
         lora_weight=None):
+    global model, tokenizer, prompter
+    
     load_8bit: bool = False
     base_model: str = base_model or "linhvu/decapoda-research-llama-7b-hf"
     lora_weights: str = lora_weight or None
